@@ -11,9 +11,7 @@ class Renderer {
 	private static final int MAX_BOUNCES = 5;
 	private static final int MIN_BOUNCES = 3;
 
-	static Scene scene;
-
-	static Ray cameraRay(int x, int y, Random rng) {
+	static Ray cameraRay(int x, int y, Scene scene, Random rng) {
 		Vec3 forward = scene.lookAt.sub(scene.camera).normalized();
 		Vec3 right = forward.cross(scene.up).normalized();
 		Vec3 trueUp = right.cross(forward);
@@ -44,7 +42,7 @@ class Renderer {
 		return new Ray(scene.camera, world.sub(scene.camera).normalized());
 	}
 
-	static Vec3 trace(Ray initialRay, Random rng) {
+	static Vec3 trace(Ray initialRay, Scene scene, Random rng) {
 		Ray ray = initialRay;
 		Vec3 radiance = Vec3.ZERO;
 		Vec3 throughput = Vec3.ONE;
@@ -173,10 +171,8 @@ class Renderer {
 		return (int) Math.round(clamp(x, 0, 1) * 255);
 	}
 
-	public static BufferedImage render(Scene _scene) throws Exception {
+	public static BufferedImage render(Scene scene) throws Exception {
 		long start = System.nanoTime();
-
-		scene = _scene;
 
 		int[] pixels = new int[scene.width * scene.height];
 
@@ -185,8 +181,8 @@ class Renderer {
 				Vec3 sum = Vec3.ZERO;
 				for (int sample = 0; sample < scene.samples; sample++) {
 					Random rng = new Random(x, y, sample);
-					Ray ray = cameraRay(x, y, rng);
-					sum = sum.add(trace(ray, rng));
+					Ray ray = cameraRay(x, y, scene, rng);
+					sum = sum.add(trace(ray, scene, rng));
 				}
 
 				Vec3 linear = sum.div(scene.samples).max(0);
