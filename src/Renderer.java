@@ -176,7 +176,26 @@ class Renderer {
 
 		int[] pixels = new int[scene.width * scene.height];
 
-		IntStream.range(0, scene.height).parallel().forEach(y -> {
+		renderRows(scene, 0, scene.height, pixels);
+
+		BufferedImage image = new BufferedImage(scene.width, scene.height, BufferedImage.TYPE_INT_ARGB);
+		image.setRGB(0, 0, scene.width, scene.height, pixels, 0, scene.width);
+
+		double seconds = (System.nanoTime() - start) / 1e9;
+		System.out.printf("Rendered %dx%d at %d spp to %s in %.2f seconds%n",
+				scene.width, scene.height, scene.samples, "test.png", seconds);
+
+		return image;
+	}
+
+	static int[] renderRows(Scene scene, int startY, int endY) {
+		int[] pixels = new int[scene.width * (endY - startY)];
+		renderRows(scene, startY, endY, pixels);
+		return pixels;
+	}
+
+	private static void renderRows(Scene scene, int startY, int endY, int[] pixels) {
+		IntStream.range(startY, endY).parallel().forEach(y -> {
 			for (int x = 0; x < scene.width; x++) {
 				Vec3 sum = Vec3.ZERO;
 				for (int sample = 0; sample < scene.samples; sample++) {
@@ -191,17 +210,8 @@ class Renderer {
 				int r = toByte(mapped.x());
 				int g = toByte(mapped.y());
 				int b = toByte(mapped.z());
-				pixels[y * scene.width + x] = (255 << 24) | (r << 16) | (g << 8) | b;
+				pixels[(y - startY) * scene.width + x] = (255 << 24) | (r << 16) | (g << 8) | b;
 			}
 		});
-
-		BufferedImage image = new BufferedImage(scene.width, scene.height, BufferedImage.TYPE_INT_ARGB);
-		image.setRGB(0, 0, scene.width, scene.height, pixels, 0, scene.width);
-
-		double seconds = (System.nanoTime() - start) / 1e9;
-		System.out.printf("Rendered %dx%d at %d spp to %s in %.2f seconds%n",
-				scene.width, scene.height, scene.samples, "test.png", seconds);
-
-		return image;
 	}
 }
