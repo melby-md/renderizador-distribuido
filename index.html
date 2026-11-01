@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Image Renderer</title>
+</head>
+<body>
+    <h1>Image Renderer</h1>
+
+    <form id="upload-form">
+        <input type="file" id="file" name="file" required>
+        <button type="submit">Render</button>
+    </form>
+
+    <h2>Result</h2>
+    <img id="result" alt="Rendered image" style="max-width: 100%;">
+
+    <script>
+        const form = document.getElementById("upload-form");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const file = document.getElementById("file").files[0];
+
+            if (!file) {
+                alert("Select a file first");
+                return;
+            }
+
+            const xml = await file.text();
+
+            const response = await fetch("/render", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/xml"
+                },
+                body: xml
+            });
+
+            if (!response.ok) {
+                alert("Rendering failed: " + response.status);
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            result.src = url;
+        });
+    </script>
+</body>
+</html>
